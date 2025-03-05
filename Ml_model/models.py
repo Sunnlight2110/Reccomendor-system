@@ -1,4 +1,6 @@
 from django.db import models
+from admin_app.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Book(models.Model):
     isbn = models.CharField(max_length=13, primary_key=True)
@@ -16,3 +18,17 @@ class Book(models.Model):
     class Meta:
         db_table = 'books'
 
+class Rating(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name = 'ratings')
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name = 'ratings')
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)]
+    )
+
+    def __str__(self):
+        return f"{self.user_id} rated {self.book_isbn} {self.rating} stars"
+
+    class Meta:
+        db_table = 'Rating'
+        unique_together = ('user', 'book')
+        

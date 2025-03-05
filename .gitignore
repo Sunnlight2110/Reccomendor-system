@@ -1,0 +1,15 @@
+.env
+admin_app/__pycache__/
+
+admin_app/migrations/
+
+MI_model/__pycache__/
+
+MI_model/migrations/
+
+ 
+**/__pycache__/
+
+**/migrations/
+
+ 
