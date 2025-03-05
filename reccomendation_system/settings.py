@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'django_extensions',
-    'rest_framework_simplejwt',  # add this line
+    'rest_framework_simplejwt', 
 ]
 
 EXTERNAL_APPS = [
@@ -70,8 +70,8 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
-    'USER_ID_FIELD': 'user_id',  # Add this line
-    'USER_ID_CLAIM': 'user_id',  # Add this line
+    'USER_ID_FIELD': 'user_id',
+    'USER_ID_CLAIM': 'user_id',  
 }
 
 MIDDLEWARE = [

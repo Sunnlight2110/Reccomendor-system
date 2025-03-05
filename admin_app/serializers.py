@@ -23,3 +23,8 @@ class UserSerializer(serializers.ModelSerializer):
             user.age = validated_data['age']
         user.save()
         return user
+
+class UserBulkCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('user_id', 'location', 'age')
