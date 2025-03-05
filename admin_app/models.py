@@ -21,6 +21,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     user_id = models.BigAutoField(primary_key=True)
     username = models.CharField(max_length=150, blank=True, null=True, unique=True)
     email = models.EmailField(max_length=255, blank=True, null=True, unique=True)
+    location = models.CharField(max_length=255, blank=True, null=True)
+    age = models.IntegerField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
@@ -43,12 +45,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         return str(self.user_id)
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, related_name='profile')
     phone_number = models.CharField(max_length=15, blank=True)
     address = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Profile of user {self.user.user_id}"
+        return f"Profile of user {self.user.user_id if self.user else 'Deleted User'}"
 
