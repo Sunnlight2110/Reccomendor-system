@@ -6,7 +6,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['user_id', 'username', 'email', 'password', 'is_active', 'created_at']
+        fields = ['user_id', 'username', 'email', 'password','age','location', 'is_active', 'created_at']
         read_only_fields = ['user_id', 'created_at']
 
     def create(self, validated_data):
@@ -17,5 +17,9 @@ class UserSerializer(serializers.ModelSerializer):
             user.username = validated_data['username']
         if 'email' in validated_data:
             user.email = validated_data['email']
+        if 'location' in validated_data:
+            user.location = validated_data['location']
+        if 'age' in validated_data:
+            user.age = validated_data['age']
         user.save()
         return user

@@ -21,6 +21,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     user_id = models.BigAutoField(primary_key=True)
     username = models.CharField(max_length=150, blank=True, null=True, unique=True)
     email = models.EmailField(max_length=255, blank=True, null=True, unique=True)
+    location = models.CharField(max_length=255, blank=True, null=True)
+    age = models.IntegerField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
