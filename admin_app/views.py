@@ -19,42 +19,67 @@ class AddUserView(generics.CreateAPIView):
     permission_classes = [AllowAny]
 
 class BulkCreateUsersView(APIView):
-    parser_classes = (MultiPartParser,)
-    permission_classes = [IsAdminUser]
+    parser_classes = (MultiPartParser, JSONParser)
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         try:
             file = request.FILES.get('file')
-            if not file:
-                return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
+            if file:
+                # Handle CSV file upload
+                df = pd.read_csv(file)
+                df['Age'] = df['Age'].fillna(value=0)  # Explicitly specify fill value
+                df['Location'] = df['Location'].fillna(value='')  # Empty string for location
+                
+                users_data = []
+                skipped_users = []
+                existing_user_ids = set(User.objects.values_list('user_id', flat=True))
 
-            # Read CSV file
-            df = pd.read_csv(file)
+                with transaction.atomic():
+                    for _, row in df.iterrows():
+                        user_id = int(row['User-ID']) if 'User-ID' in row else None
+                        
+                        # Skip if user_id already exists
+                        if user_id and user_id in existing_user_ids:
+                            skipped_users.append(user_id)
+                            continue
 
-            # Handle missing values
-            df['Age'] = df['Age'].fillna(0)
-            df['Location'] = df['Location'].fillna(None)
-            
-            # Prepare data for bulk create
-            users_data = []
-            with transaction.atomic():
-                for _, row in df.iterrows():
-                    user_data = {
-                        'user_id': int(row['User-ID']),
-                        'location': row['Location'] if pd.notna(row['Location']) else None,
-                        'age': float(row['Age']) if pd.notna(row['Age']) else 0
-                    }
+                        user_data = {
+                            'user_id': user_id,
+                            'location': None if row['Location'] == '' else row['Location'],
+                            'age': float(row['Age'])
+                        }
+                        users_data.append(user_data)
+            else:
+                # Handle JSON data input
+                users_data = []
+                skipped_users = []
+                raw_users_data = request.data.get('users', [])
+                existing_user_ids = set(User.objects.values_list('user_id', flat=True))
+
+                for user_data in raw_users_data:
+                    user_id = user_data.get('user_id')
+                    if user_id and user_id in existing_user_ids:
+                        skipped_users.append(user_id)
+                        continue
                     users_data.append(user_data)
 
-                # Validate and create users
-                serializer = UserBulkCreateSerializer(data=users_data, many=True)
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response({
-                        'message': f'Successfully created {len(users_data)} users',
-                        'data': serializer.data
-                    }, status=status.HTTP_201_CREATED)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if not users_data:
+                return Response({
+                    'message': 'No new users to create',
+                    'skipped_users': skipped_users
+                }, status=status.HTTP_200_OK)
+
+            # Validate and create users
+            serializer = UserBulkCreateSerializer(data=users_data, many=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    'message': f'Successfully created {len(users_data)} users',
+                    'skipped_users': skipped_users,
+                    'data': serializer.data
+                }, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
